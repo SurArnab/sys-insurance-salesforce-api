@@ -1,0 +1,10 @@
+{
+    "customerid" : 1,
+    "name" : "Arnab Sur",
+    "contactnumber" : "9876543120",
+    "age" : 31,
+    "smoking": "No",
+    "drinking" : "Yes",
+    "illness" : "No",
+    "salary" : 100000
+  }

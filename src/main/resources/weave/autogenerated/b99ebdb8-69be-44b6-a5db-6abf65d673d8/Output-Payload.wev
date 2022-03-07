@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_b99ebdb8_69be_44b6_a5db_6abf65d673d8_Output_Payload = Array<{  drinking: "No" | "Yes",   contactnumber: String,   smoking: "No" | "Yes",   customerid: Number,   name: String,   salary: Number,   age: Number,   illness: "No" | "Yes",   _?: Any}>
+
