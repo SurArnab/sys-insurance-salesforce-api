@@ -1,0 +1,42 @@
+[
+  {
+    "customerid" : 1,
+    "name" : "Arnab Sur",
+    "contactnumber" : "9876543120",
+    "age" : 31,
+    "smoking": "No",
+    "drinking" : "Yes",
+    "illness" : "No",
+    "salary" : 100000
+  },
+  {
+    "customerid" : 2,
+    "name" : "Rushikesh Shelke",
+    "contactnumber" : "9876543111",
+    "age" : 24,
+    "smoking": "No",
+    "drinking" : "No",
+    "illness" : "No",
+    "salary" : 100000
+  },
+  {
+    "customerid" : 3,
+    "name" : "Test User",
+    "contactnumber" : "9876543120",
+    "age" : 30,
+    "smoking": "Yes",
+    "drinking" : "No",
+    "illness" : "No",
+    "salary" : 15500
+  },
+  {
+    "customerid" : 4,
+    "name" : "Test User 1",
+    "contactnumber" : "9876543120",
+    "age" : 29,
+    "smoking": "No",
+    "drinking" : "No",
+    "illness" : "Yes",
+    "salary" : 155000
+  }
+]

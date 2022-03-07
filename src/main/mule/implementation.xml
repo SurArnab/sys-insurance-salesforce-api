@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="createcustomerFlow" doc:id="b99ebdb8-69be-44b6-a5db-6abf65d673d8" >
+		<logger level="INFO" doc:name="start Logger" doc:id="d3c2e600-e634-4b4e-bd00-53004350339d" message='"Start of create customer service"'/>
+		<ee:transform doc:name="map to sfdc" doc:id="15f3c4b5-928c-4a25-aac9-480f7cd7cc36" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map(customer, index) -> {
+	Name: customer.name,
+	contactnumber__c: customer.contactnumber,
+	customerid__c: customer.customerid,
+	age__c: customer.age,
+	smoking__c: customer.smoking,
+	drinking__c: customer.drinking,
+	illness__c: customer.illness,
+	salary__c: customer.salary
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="InsuranceCustomer__c" doc:name="Create customers" doc:id="6c51f091-a437-4f12-b04b-070f39d44155" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="9de02e42-2ab3-48c4-a11d-2ce110f56d24" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"message" : "customers created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="end Logger" doc:id="82933cbc-a09d-4b78-a795-d0ed5c8d1142" message='"End of create customers service"'/>
+	</flow>
+	<flow name="getcustomerFlow" doc:id="7d71206e-61d4-45b6-99d7-d8d486a21e22" >
+		<logger level="INFO" doc:name="start Logger" doc:id="86bc9b3f-af25-4e81-943b-230d92e6697c" message='"Start of get customer service for customer id " #[attributes.uriParams.customerid]'/>
+		<set-variable value="#[attributes.uriParams.customerid]" doc:name="Set customerid" doc:id="2745a833-96f2-47ab-8a1a-feee8a295a8a" variableName="customerid"/>
+		<salesforce:query doc:name="Query" doc:id="f5b7d95b-5692-4122-95c2-9ee8683aeaf4" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT age__c,contactnumber__c,customerid__c,drinking__c,illness__c,Name,salary__c,smoking__c FROM InsuranceCustomer__c where customerid__c = :customerid]]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"customerid" : attributes.uriParams.customerid as Number
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Choice" doc:id="c251d304-973e-4f42-a06f-a85389a08b0c" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="map to target" doc:id="e8d44b10-379a-4385-9784-acb20ec286f8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	customerid: (payload[0].customerid__c  default 0) as Number as String {format:"0"},
+	name: payload[0].Name default "",
+	contactnumber: payload[0].contactnumber__c default "",
+	age: (payload[0].age__c  default 0) as Number as String {format:"0"},
+	smoking: payload[0].smoking__c default "",
+	drinking: payload[0].drinking__c default "",
+	illness: payload[0].illness__c default "",
+	salary: payload[0].salary__c default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="data Logger" doc:id="03cfdde3-0091-4856-a370-7221e04a0056" message='"Data to send " #[payload]'/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="error map to target" doc:id="e4315a60-cadd-426c-a35f-d00b4face48a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "No Result for customer id " ++ vars.customerid 
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[400]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="end Logger" doc:id="d8c4afbc-daeb-4a5a-a4ed-b6e27cebdc3e" message='"End of get customer for customer id " #[vars.customerid]'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="82a87f47-4ffb-4c30-9a60-b671c200d67a" type="ANY" >
+				<logger level="INFO" doc:name="error Logger" doc:id="c4bc7237-9f34-4dce-8e13-20a7c47ca0d1" message="Error is #[error.description]" />
+				<ee:transform doc:name="map to error" doc:id="c7320be8-b438-41d1-96ac-73f61cbc1f9d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="createPolicyFlow" doc:id="89bcda5b-6577-4b40-be12-33a65dd4613a" >
+		<logger level="INFO" doc:name="start Logger" doc:id="1df0a885-881d-4a2a-b694-11bde5886dd5" message='"Start of create policy service"' />
+		<ee:transform doc:name="map to policy" doc:id="27040f75-78da-4376-beb9-4236bea54400" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	policyno__c: payload01.policyno,
+	customerid__c: payload01.customerid,
+	premium__c: payload01.premium,
+	coverage__c: payload01.coverage,
+	tenure__c: payload01.tenure
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="policy__c" doc:name="Create policy" doc:id="d169eda2-5939-4d6c-a790-bfe29ed488c5" config-ref="Salesforce_Config" />
+		<ee:transform doc:name="map to target" doc:id="819bfc8f-4acb-4812-a4e0-f94e8b96bdbb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"message" : "policies created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="end Logger" doc:id="9ed131fd-d6da-4c20-9e35-d64f2faf13b2" message='"End of create policy service"' />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="747e0341-75a4-45b3-8b4a-b9ddac0c664e" type="ANY" >
+				<logger level="INFO" doc:name="error Logger" doc:id="1f10cf90-34c1-477c-b2e2-5494a1c402f0" message="Error is #[error.description]" />
+				<ee:transform doc:name="map to error" doc:id="d24cab30-5a23-47e8-b2ea-e94901dc184c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

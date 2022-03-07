@@ -1,0 +1,60 @@
+#%RAML 1.0
+title: Insurance-Sys-API
+description: This is Insurance API design for salesforce and database. We can add or search (based on customer id) for customers.
+baseUri: https://api.insurance.com/api/
+version: v1
+mediaType: 
+  - application/json
+protocols:
+  - HTTPS
+  - HTTP
+
+traits:
+  errorResponse: !include /traits/errorResponseTraits.raml
+
+uses:
+  insurancedatatype: /datatype/insurance-sys-library.raml
+
+/customers:
+  is: errorResponse
+  /{customerid}:
+    get:
+      description: Get the customer details based on customer id
+      responses:
+        200:
+          body:
+            application/json:
+              type: insurancedatatype.customer
+              example: !include /example/getcustomer.json
+  post:
+    description: Add the customer details
+    body:
+      application/json:
+        type: insurancedatatype.customer[]
+        example:
+           !include /example/createcustomer.json
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {
+                "message" : "customer created"
+              }
+
+/policies:
+  post:
+    description: add the policy details
+    body:
+      application/json:
+        type: insurancedatatype.policy[]
+        example:
+          !include /example/createpolicy.json
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {
+                "message" : "Policy created"
+              }
